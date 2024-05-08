@@ -1,0 +1,18 @@
+{
+    "python.analysis.extraPaths": [
+        "/Users/dan/Code/LLM/llm_researcher"
+    ],
+    "python.defaultInterpreterPath": "/Users/dan/Code/LLM/llm_researcher",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ]
+}
