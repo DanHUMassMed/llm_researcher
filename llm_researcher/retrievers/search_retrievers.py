@@ -17,6 +17,9 @@ def tavily_search(query, max_results=7):
         search_response = [{"href": obj["url"], "body": obj["content"]} for obj in results.get("results", [])]
     except Exception as e: # Fallback in case overload on Tavily Search API
         print(f"Error: {e}")
-        ddg = DDGS()
-        search_response = ddg.text(query, region='wt-wt', max_results=max_results)
+        search_response = []
+        #ddg = DDGS()
+        #search_response = ddg.text(query, region='wt-wt', max_results=max_results)
+
+    search_response = [obj for obj in search_response if "youtube.com" not in obj["href"]]
     return search_response

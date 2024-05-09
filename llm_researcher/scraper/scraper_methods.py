@@ -12,14 +12,14 @@ import os
 
 
 
-def arxiv_scrape(link):
+def arxiv_scraper(link):
     query = link.split("/")[-1]
     retriever = ArxivRetriever(load_max_docs=2, doc_content_chars_max=None)
     docs = retriever.invoke(query)
     # Just pulling the abstract
     return docs[0].page_content
 
-def pdf_scrape(link):
+def pdf_scraper(link):
     loader = PyMuPDFLoader(link)
     docs = loader.load()
     content =""
@@ -27,7 +27,7 @@ def pdf_scrape(link):
         content += doc.page_content
     return content
 
-def bs_scrape(link):
+def bs_scraper(link):
     response = requests.get(link)
     temp_file = f"temp_{uuid.uuid4()}.html"
     with open(temp_file, "w", encoding="utf-8") as f:
@@ -41,7 +41,7 @@ def bs_scrape(link):
     document.page_content = re.sub("\n\n+", "\n", document.page_content)
     return document.page_content
 
-def web_scrape(link):
+def web_scraper(link):
     try:
         loader = WebBaseLoader(link)
         loader.requests_kwargs = {"verify": False}

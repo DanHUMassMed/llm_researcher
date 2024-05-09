@@ -1,11 +1,13 @@
 import asyncio
 import json
+from concurrent.futures.thread import ThreadPoolExecutor
+
 
 import markdown
 
 from llm_researcher.master.prompts import *
-from llm_researcher.scraper.scraper import Scraper
 from llm_researcher.utils.llm import create_chat_completion
+import llm_researcher.scraper.scraper_methods
 
 
 async def choose_agent(query, cfg):
@@ -74,7 +76,7 @@ async def get_sub_queries(query: str, agent_role_prompt: str, cfg, parent_query:
     return sub_queries
 
 
-def scrape_urls(urls, cfg=None):
+def scrape_urls(urls, cfg):
     """
     Scrapes the urls
     Args:
@@ -85,13 +87,33 @@ def scrape_urls(urls, cfg=None):
         text: str
 
     """
-    content = []
-    user_agent = cfg.user_agent if cfg else "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"
+    def extract_data_from_link(scraper_nm, link):
+        print(f"extract_data_from_link {scraper_nm=}, {link=}")
+        if link.endswith(".pdf"):
+            scraper_nm = "pdf_scraper"
+        elif "arxiv.org" in link:
+            scraper_nm = "arxiv_scraper"
+
+        content = ""
+        try:
+            scraper = getattr(llm_researcher.scraper.scraper_methods, scraper_nm)
+            content = scraper(link)
+
+            if len(content) < 100:
+                return {"url": link, "raw_content": None}
+            return {"url": link, "raw_content": content}
+        except Exception:
+            return {"url": link, "raw_content": None}
+
+    content_list = []
     try:
-        content = Scraper(urls, user_agent, cfg.scraper).run()
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            contents = executor.map(lambda url: extract_data_from_link(cfg.scraper_nm, url), urls)
+        content_list = [content for content in contents if content["raw_content"] is not None]
+
     except Exception as e:
         print(f"Error in scrape_urls: {e}")
-    return content
+    return content_list
 
 
 
