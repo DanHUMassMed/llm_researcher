@@ -28,7 +28,7 @@ def pdf_scraper(link):
     return content
 
 def bs_scraper(link):
-    response = requests.get(link)
+    response = requests.get(link, timeout=10)
     temp_file = f"temp_{uuid.uuid4()}.html"
     with open(temp_file, "w", encoding="utf-8") as f:
         f.write(response.text)

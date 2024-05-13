@@ -11,6 +11,8 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 
+from llm_researcher.master.prompts import auto_agent_instructions, generate_subtopics_prompt
+from llm_researcher.utils.validators import Subtopics
 
 async def create_chat_completion(
         messages: list,  # type: ignore
@@ -57,3 +59,37 @@ async def create_chat_completion(
 
     logging.error("Failed to get response from OpenAI API")
     raise RuntimeError("Failed to get response from OpenAI API")
+
+
+async def construct_subtopics(task: str, data: str, config, subtopics: list = []) -> list:
+    #try:
+        parser = PydanticOutputParser(pydantic_object=Subtopics)
+
+        prompt = PromptTemplate(
+            template=generate_subtopics_prompt(),
+            input_variables=["task", "data", "subtopics", "max_subtopics"],
+            partial_variables={
+                "format_instructions": parser.get_format_instructions()},
+        )
+
+        print(f"\n🤖 Calling {config.smart_llm_model}...\n")
+
+        llm_provider = config.llm_provider(model=config.smart_llm_model,
+                                            max_tokens=config.smart_token_limit,
+                                            temperature=0)
+        model = llm_provider.llm
+
+        chain = prompt | model | parser
+
+        output = chain.invoke({
+            "task": task,
+            "data": data,
+            "subtopics": subtopics,
+            "max_subtopics": config.max_subtopics
+        })
+
+        return output
+
+    #except Exception as e:
+    #    print("Exception in parsing subtopics : ", e)
+    #    return subtopics
